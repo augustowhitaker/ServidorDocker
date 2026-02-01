@@ -1,0 +1,81 @@
+﻿services:
+  painel-painel:
+    build: ./app
+    container_name: painel-painel
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    mem_limit: 512m
+    networks:
+      - painel-network
+
+  painel-music:
+    image: deluan/navidrome:latest
+    container_name: painel-music
+    environment:
+      ND_BASEURL: "/music"
+    volumes:
+      - ./music:/music
+      - navidrome_config:/config
+    restart: unless-stopped
+    mem_limit: 512m
+    networks:
+      - painel-network
+
+  retroarch:
+    image: linuxserver/retroarch
+    container_name: retroarch
+    volumes:
+      - ./roms:/roms
+    restart: unless-stopped
+    mem_limit: 512m
+    networks:
+      - painel-network
+
+  emulatorjs:
+    build: ./emulatorjs
+    container_name: emulatorjs
+    volumes:
+      - ./emulatorjs:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    networks:
+      - painel-network
+
+  jellyfin:
+    image: jellyfin/jellyfin
+    container_name: jellyfin
+    volumes:
+      - jellyfin_config:/config
+      - jellyfin_media:/media
+    environment:
+      - JELLYFIN_PublishedServerUrl=http://localhost/jellyfin
+    mem_limit: 1g
+    restart: unless-stopped
+    networks:
+      - painel-network
+
+  painel-proxy:
+    image: nginx:alpine
+    container_name: painel-proxy
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - painel-painel
+      - painel-music
+      - jellyfin
+      - emulatorjs
+    restart: unless-stopped
+    mem_limit: 256m
+    networks:
+      - painel-network
+
+volumes:
+  navidrome_config:
+  jellyfin_config:
+  jellyfin_media:
+
+networks:
+  painel-network:
+    external: true

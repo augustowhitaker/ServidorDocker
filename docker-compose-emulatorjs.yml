@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  emulatorjs:
+    image: nginx:alpine
+    container_name: emulatorjs
+    ports:
+      - "8082:80"  # Porta externa para testar diretamente
+    volumes:
+      - ./emulatorjs:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    networks:
+      - painel-network
+
+networks:
+  painel-network:
+    external: true
+
